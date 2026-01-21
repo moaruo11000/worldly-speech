@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Worldly Speech</title>
+  <style>
+    body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; background: #f9f9f9; }
+    h1 { text-align: center; }
+    input, textarea, button { width: 100%; padding: 10px; margin-top: 10px; }
+    ul { list-style: none; padding: 0; }
+    li { background: #fff; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+<h1>Worldly Speech</h1>
+<p style="text-align:center;">Global Voices. Civil Dialogue.</p>
+
+<div id="auth">
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="forum" style="display:none;">
+  <textarea id="post" placeholder="Write your thoughts (English only, text + emojis)"></textarea>
+  <button onclick="addPost()">Post</button>
+  <ul id="posts"></ul>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<script type="module">
+  // Import Firebase modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+  // Replace these with YOUR Firebase project details
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+    projectId: "YOUR_PROJECT"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+  const db = getDatabase();
+
+  const authDiv = document.getElementById("auth");
+  const forumDiv = document.getElementById("forum");
+  const postInput = document.getElementById("post");
+  const postsList = document.getElementById("posts");
+
+  // Register new user
+  window.register = () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(() => showForum())
+      .catch(e => alert(e.message));
+  };
+
+  // Login user
+  window.login = () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => showForum())
+      .catch(e => alert(e.message));
+  };
+
+  // Show forum after login
+  function showForum() {
+    authDiv.style.display = "none";
+    forumDiv.style.display = "block";
+  }
+
+  // Logout user
+  window.logout = () => {
+    signOut(auth).then(() => {
+      authDiv.style.display = "block";
+      forumDiv.style.display = "none";
+    });
+  };
+
+  // Add a post
+  window.addPost = () => {
+    const text = postInput.value.trim();
+    if (!text) return;
+
+    push(ref(db, "posts"), { text, time: Date.now() });
+    postInput.value = "";
+  };
+
+  // Display posts in real-time
+  onChildAdded(ref(db, "posts"), (snapshot) => {
+    const msg = snapshot.val();
+    const li = document.createElement("li");
+    li.textContent = msg.text;
+    postsList.appendChild(li);
+  });
+</script>
+
+</body>
+</html>
+
