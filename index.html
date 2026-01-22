@@ -1,105 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Worldly Speech</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #f5f5f5; }
+  h1 { text-align: center; }
+  input, textarea, button { width: 100%; padding: 10px; margin-top: 10px; font-size:1em; }
+  #post { rows:6; resize:vertical; }
+  ul { list-style: none; padding: 0; }
+  li { background: #fff; padding: 12px; margin-bottom: 12px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; }
+  button { cursor: pointer; border-radius: 5px; border:none; }
+  .btn-small { font-size:0.9em; padding:4px 8px; margin-left:5px; }
+  .admin-post { border-left: 4px solid gold; background-color:#fff8dc; }
+  .comment { font-size:0.9em; background:#f1f1f1; padding:4px; border-radius:5px; margin-top:4px; }
+  #donation { text-align:center; margin:15px 0; }
+</style>
+</head>
+<body>
+
+<h1>Worldly Speech</h1>
+<p style="text-align:center;">Global Voices. Civil Dialogue.</p>
+
+<div id="auth">
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="forum" style="display:none;">
+  <div id="donation">
+    <a href="https://www.paypal.com/ncp/payment/LJ2CJCSSEKHVJ" target="_blank">
+      <button style="background-color:#0070ba; color:white; padding:10px 20px; font-size:1em;">
+        💖 Donate to support Worldly Speech
+      </button>
+    </a>
+  </div>
+  <textarea id="post" placeholder="Write your thoughts (English only, text + emojis)" rows="6" style="font-size:1em; padding:10px; resize:vertical;"></textarea>
+  <button onclick="addPost()">Post</button>
+  <ul id="posts"></ul>
+  <button onclick="logout()">Logout</button>
+</div>
+
 <script type="module">
-  // Import Firebase modules
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-  import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyCm5cGoc9TIyj2S0XDK-_nvhhUhCCAPiHM",
-    authDomain: "worldly-speech.firebaseapp.com",
-    databaseURL: "https://worldly-speech-default-rtdb.firebaseio.com",
-    projectId: "worldly-speech",
-    storageBucket: "worldly-speech.firebasestorage.app",
-    messagingSenderId: "1028112726226",
-    appId: "1:1028112726226:web:fb7c9091665459e61b550b",
-    measurementId: "G-MR9Z2PD162"
-  };
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCm5cGoc9TIyj2S0XDK-_nvhhUhCCAPiHM",
+  authDomain: "worldly-speech.firebaseapp.com",
+  databaseURL: "https://worldly-speech-default-rtdb.firebaseio.com",
+  projectId: "worldly-speech",
+  storageBucket: "worldly-speech.firebasestorage.app",
+  messagingSenderId: "1028112726226",
+  appId: "1:1028112726226:web:fb7c9091665459e61b550b",
+  measurementId: "G-MR9Z2PD162"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth();
-  const db = getDatabase();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getDatabase();
 
-  const authDiv = document.getElementById("auth");
-  const forumDiv = document.getElementById("forum");
-  const postInput = document.getElementById("post");
-  const postsList = document.getElementById("posts");
+const authDiv = document.getElementById("auth");
+const forumDiv = document.getElementById("forum");
+const postInput = document.getElementById("post");
+const postsList = document.getElementById("posts");
 
-  // ADMIN EMAIL
-  const adminEmail = "marketingkagency@gmail.com";
-  let currentUserEmail = "";
+const adminEmail = "marketingkagency@gmail.com";
+let currentUserEmail = "";
+let currentUsername = "";
 
-  // Register new user
-  window.register = () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => showForum())
-      .catch(e => alert(e.message));
-  };
+// Register
+window.register = () => {
+  const email = document.getElementById("email").value;
+  const username = prompt("Choose a username (will be public):");
+  if (!username) return alert("Username required.");
+  const password = document.getElementById("password").value;
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => { currentUsername = username; showForum(); })
+    .catch(e => alert(e.message));
+};
 
-  // Login user
-  window.login = () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => showForum())
-      .catch(e => alert(e.message));
-  };
+// Login
+window.login = () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => showForum())
+    .catch(e => alert(e.message));
+};
 
-  // Show forum after login
-  function showForum() {
-    authDiv.style.display = "none";
-    forumDiv.style.display = "block";
+// Show forum
+function showForum() {
+  authDiv.style.display = "none";
+  forumDiv.style.display = "block";
+}
+
+// Logout
+window.logout = () => {
+  signOut(auth).then(() => {
+    authDiv.style.display = "block";
+    forumDiv.style.display = "none";
+  });
+};
+
+// Track current user
+onAuthStateChanged(auth, (user) => {
+  if (user) currentUserEmail = user.email;
+  else currentUserEmail = "";
+});
+
+// Add post
+window.addPost = () => {
+  const text = postInput.value.trim();
+  if (!text) return;
+  push(ref(db, "posts"), {
+    text,
+    time: Date.now(),
+    authorEmail: currentUserEmail,
+    authorUsername: currentUsername || "Anonymous"
+  });
+  postInput.value = "";
+};
+
+// Display posts
+onChildAdded(ref(db, "posts"), (snapshot) => {
+  const msg = snapshot.val();
+  const li = document.createElement("li");
+  li.innerHTML = `<b>@${msg.authorUsername}</b>: ${msg.text}`;
+
+  // Highlight admin
+  if(msg.authorEmail === adminEmail) li.classList.add("admin-post");
+
+  // Delete button (Admin)
+  if(currentUserEmail === adminEmail){
+    const delBtn = document.createElement("button");
+    delBtn.textContent="Delete";
+    delBtn.className="btn-small";
+    delBtn.onclick = () => remove(ref(db,"posts/"+snapshot.key));
+    li.appendChild(delBtn);
   }
 
-  // Logout user
-  window.logout = () => {
-    signOut(auth).then(() => {
-      authDiv.style.display = "block";
-      forumDiv.style.display = "none";
-    });
+  // Ban button (Admin)
+  if(currentUserEmail === adminEmail && msg.authorEmail!==adminEmail){
+    const banBtn = document.createElement("button");
+    banBtn.textContent="Ban";
+    banBtn.className="btn-small";
+    banBtn.onclick = () => {
+      push(ref(db,"bannedUsers"),{email:msg.authorEmail});
+      alert(`User @${msg.authorUsername} banned`);
+    };
+    li.appendChild(banBtn);
+  }
+
+  // Like button
+  const likeBtn=document.createElement("button");
+  likeBtn.textContent="❤️ Like";
+  likeBtn.className="btn-small";
+  let likes=0;
+  likeBtn.onclick=()=>{
+    likes++; likeBtn.textContent=`❤️ Like (${likes})`;
   };
+  li.appendChild(likeBtn);
 
-  // Track current logged-in user
-  onAuthStateChanged(auth, (user) => {
-    if (user) currentUserEmail = user.email;
-    else currentUserEmail = "";
-  });
-
-  // Add a post
-  window.addPost = () => {
-    const text = postInput.value.trim();
-    if (!text) return;
-
-    push(ref(db, "posts"), { text, time: Date.now(), author: currentUserEmail });
-    postInput.value = "";
+  // Bookmark button
+  const bookmarkBtn=document.createElement("button");
+  bookmarkBtn.textContent="🔖";
+  bookmarkBtn.className="btn-small";
+  bookmarkBtn.title="Save for later";
+  bookmarkBtn.onclick=()=>{
+    push(ref(db,"bookmarks/"+currentUsername),{postId:snapshot.key,text:msg.text});
+    alert("Post bookmarked!");
   };
+  li.appendChild(bookmarkBtn);
 
-  // Display posts in real-time
-  onChildAdded(ref(db, "posts"), (snapshot) => {
-    const msg = snapshot.val();
-    const li = document.createElement("li");
-    li.textContent = msg.text;
+  // Report button
+  const reportBtn=document.createElement("button");
+  reportBtn.textContent="⚠️";
+  reportBtn.className="btn-small";
+  reportBtn.title="Report post";
+  reportBtn.onclick=()=>{
+    push(ref(db,"reports"),{postId:snapshot.key,reportedBy:currentUsername,postAuthor:msg.authorUsername,text:msg.text,time:Date.now()});
+    alert("Post reported to Admin!");
+  };
+  li.appendChild(reportBtn);
 
-    // Highlight Admin posts
-    if (msg.author === adminEmail) {
-      li.style.borderLeft = "4px solid gold";
-      li.style.backgroundColor = "#fff8dc";
-      li.style.padding = "10px";
-    }
-
-    // Add Delete button for Admin
-    if (currentUserEmail === adminEmail) {
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Delete";
-      delBtn.style.float = "right";
-      delBtn.onclick = () => {
-        remove(ref(db, "posts/" + snapshot.key));
-      };
-      li.appendChild(delBtn);
-    }
-
-    postsList.appendChild(li);
+  // Comments
+  const commentDiv=document.createElement("div"); commentDiv.style.marginTop="8px";
+  const commentInput=document.createElement("input"); commentInput.placeholder="Add comment @username..."; commentInput.style.width="70%";
+  const commentBtn=document.createElement("button"); commentBtn.textContent="Comment"; commentBtn.className="btn-small";
+  commentBtn.onclick=()=>{
+    const cText=commentInput.value.trim(); if(!cText)return;
+    push(ref(db,"comments/"+snapshot.key),{text:cText,author:currentUsername});
+    commentInput.value="";
+  };
+  commentDiv.appendChild(commentInput); commentDiv.appendChild(commentBtn);
+  const commentsList=document.createElement("ul"); commentsList.style.marginTop="6px"; commentDiv.appendChild(commentsList);
+  onChildAdded(ref(db,"comments/"+snapshot.key),(cSnap)=>{
+    const c=cSnap.val(); const cLi=document.createElement("li");
+    cLi.textContent=`@${c.author}: ${c.text}`;
+    cLi.className="comment";
+    commentsList.appendChild(cLi);
   });
+  li.appendChild(commentDiv);
+
+  postsList.appendChild(li);
+});
 </script>
