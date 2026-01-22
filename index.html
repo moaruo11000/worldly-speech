@@ -1,52 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Worldly Speech</title>
-  <style>
-    body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; background: #f9f9f9; }
-    h1 { text-align: center; }
-    input, textarea, button { width: 100%; padding: 10px; margin-top: 10px; }
-    ul { list-style: none; padding: 0; }
-    li { background: #fff; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-  </style>
-</head>
-<body>
-
-<h1>Worldly Speech</h1>
-<p style="text-align:center;">Global Voices. Civil Dialogue.</p>
-
-<div id="auth">
-  <input id="email" type="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="register()">Register</button>
-  <button onclick="login()">Login</button>
-</div>
-
-<div id="forum" style="display:none;">
-  <textarea id="post" placeholder="Write your thoughts (English only, text + emojis)"></textarea>
-  <button onclick="addPost()">Post</button>
-  <ul id="posts"></ul>
-  <button onclick="logout()">Logout</button>
-</div>
-
 <script type="module">
   // Import Firebase modules
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+  import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCm5cGoc9TIyj2S0XDK-_nvhhUhCCAPiHM",
-  authDomain: "worldly-speech.firebaseapp.com",
-  databaseURL: "https://worldly-speech-default-rtdb.firebaseio.com",
-  projectId: "worldly-speech",
-  storageBucket: "worldly-speech.firebasestorage.app",
-  messagingSenderId: "1028112726226",
-  appId: "1:1028112726226:web:fb7c9091665459e61b550b",
-  measurementId: "G-MR9Z2PD162"
-};
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCm5cGoc9TIyj2S0XDK-_nvhhUhCCAPiHM",
+    authDomain: "worldly-speech.firebaseapp.com",
+    databaseURL: "https://worldly-speech-default-rtdb.firebaseio.com",
+    projectId: "worldly-speech",
+    storageBucket: "worldly-speech.firebasestorage.app",
+    messagingSenderId: "1028112726226",
+    appId: "1:1028112726226:web:fb7c9091665459e61b550b",
+    measurementId: "G-MR9Z2PD162"
+  };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth();
@@ -56,6 +24,10 @@ const firebaseConfig = {
   const forumDiv = document.getElementById("forum");
   const postInput = document.getElementById("post");
   const postsList = document.getElementById("posts");
+
+  // ADMIN EMAIL
+  const adminEmail = "marketingkagency@gmail.com";
+  let currentUserEmail = "";
 
   // Register new user
   window.register = () => {
@@ -89,12 +61,18 @@ const firebaseConfig = {
     });
   };
 
+  // Track current logged-in user
+  onAuthStateChanged(auth, (user) => {
+    if (user) currentUserEmail = user.email;
+    else currentUserEmail = "";
+  });
+
   // Add a post
   window.addPost = () => {
     const text = postInput.value.trim();
     if (!text) return;
 
-    push(ref(db, "posts"), { text, time: Date.now() });
+    push(ref(db, "posts"), { text, time: Date.now(), author: currentUserEmail });
     postInput.value = "";
   };
 
@@ -103,10 +81,25 @@ const firebaseConfig = {
     const msg = snapshot.val();
     const li = document.createElement("li");
     li.textContent = msg.text;
+
+    // Highlight Admin posts
+    if (msg.author === adminEmail) {
+      li.style.borderLeft = "4px solid gold";
+      li.style.backgroundColor = "#fff8dc";
+      li.style.padding = "10px";
+    }
+
+    // Add Delete button for Admin
+    if (currentUserEmail === adminEmail) {
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Delete";
+      delBtn.style.float = "right";
+      delBtn.onclick = () => {
+        remove(ref(db, "posts/" + snapshot.key));
+      };
+      li.appendChild(delBtn);
+    }
+
     postsList.appendChild(li);
   });
 </script>
-
-</body>
-</html>
-
