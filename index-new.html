@@ -36,13 +36,17 @@
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
   import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-  // Replace these with YOUR Firebase project details
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-    projectId: "YOUR_PROJECT"
-  };
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCm5cGoc9TIyj2S0XDK-_nvhhUhCCAPiHM",
+  authDomain: "worldly-speech.firebaseapp.com",
+  databaseURL: "https://worldly-speech-default-rtdb.firebaseio.com",
+  projectId: "worldly-speech",
+  storageBucket: "worldly-speech.firebasestorage.app",
+  messagingSenderId: "1028112726226",
+  appId: "1:1028112726226:web:fb7c9091665459e61b550b",
+  measurementId: "G-MR9Z2PD162"
+};
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth();
